@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Link Parser Ultra</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:        #ffffff;
+  --alt:       #f6f7f9;
+  --alt2:      #eef0f3;
+  --border:    #e7e9ee;
+  --border2:   #d8dbe2;
+  --accent:    #2563eb;
+  --accent-d:  #1d4ed8;
+  --accent-l:  #eff4ff;
+  --green:     #16a34a;
+  --green-l:   #ecfdf3;
+  --red:       #e5484d;
+  --orange:    #ea7317;
+  --purple:    #8b5cf6;
+  --twitter:   #1d9bf0;
+  --text:      #16181d;
+  --text2:     #5b6472;
+  --text3:     #9aa1ac;
+  --shadow-sm: 0 1px 2px rgba(16,24,40,0.05);
+  --shadow:    0 4px 16px rgba(16,24,40,0.08);
+  --shadow-lg: 0 12px 32px rgba(16,24,40,0.12);
+  --font:      'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+}
+
+html, body {
+  width: 416px;
+  min-width: 416px;
+  max-width: 416px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.header { padding: 16px 18px 0; background: var(--bg); border-bottom: 1px solid var(--border); }
+.header-top { display: flex; align-items: center; gap: 11px; margin-bottom: 15px; }
+
+.logo {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; box-shadow: 0 4px 12px rgba(37,99,235,0.28);
+}
+.logo svg { width: 21px; height: 21px; fill: #fff; }
+
+.title-block { flex: 1; min-width: 0; }
+.app-title { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.1; }
+.app-sub { font-size: 11px; color: var(--text3); font-weight: 500; margin-top: 2px; }
+
+.header-btns { display: flex; gap: 6px; }
+.hbtn {
+  width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 9px;
+  background: var(--bg); color: var(--text2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.18s ease;
+}
+.hbtn svg { width: 16px; height: 16px; fill: currentColor; }
+.hbtn:hover { background: var(--alt); border-color: var(--border2); color: var(--text); transform: translateY(-1px); }
+.hbtn:active { transform: translateY(0); }
+
+.tabs { display: flex; position: relative; }
+.tab {
+  flex: 1; padding: 11px 6px; text-align: center; font-size: 12.5px; font-weight: 600;
+  color: var(--text3); cursor: pointer; transition: color 0.18s ease; user-select: none;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.tab svg { width: 14px; height: 14px; fill: currentColor; }
+.tab:hover:not(.active) { color: var(--text2); }
+.tab.active { color: var(--accent); }
+.tab-indicator { position: absolute; bottom: 0; height: 2px; background: var(--accent); border-radius: 2px 2px 0 0; transition: left 0.28s cubic-bezier(0.4,0,0.2,1), width 0.28s cubic-bezier(0.4,0,0.2,1); }
+
+.body { padding: 14px 16px; display: flex; flex-direction: column; gap: 11px; }
+
+.settings { background: var(--alt); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.3s ease, opacity 0.25s ease; }
+.settings.open { max-height: 220px; opacity: 1; }
+.settings-inner { padding: 13px 14px; display: flex; flex-direction: column; gap: 12px; }
+.settings-title { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; }
+.setting-label { font-size: 12.5px; color: var(--text); font-weight: 500; }
+
+.toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.tslider { position: absolute; inset: 0; background: var(--border2); border-radius: 12px; cursor: pointer; transition: 0.22s; }
+.tslider::before { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; top: 2px; left: 2px; box-shadow: var(--shadow-sm); transition: 0.22s cubic-bezier(0.4,0,0.2,1); }
+.toggle input:checked + .tslider { background: var(--accent); }
+.toggle input:checked + .tslider::before { transform: translateX(16px); }
+
+.panel { display: none; flex-direction: column; gap: 10px; animation: fade 0.25s ease; }
+.panel.active { display: flex; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.ta-wrap { position: relative; }
+textarea {
+  width: 100%; height: 150px; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 13px; color: var(--text); resize: none; outline: none; padding: 13px;
+  font-size: 13px; font-family: var(--font); line-height: 1.65;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-l); }
+textarea::placeholder { color: var(--text3); }
+
+.ta-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 0 2px; }
+.ta-count { font-size: 11px; color: var(--text3); font-weight: 500; }
+.ta-btns { display: flex; gap: 6px; }
+.mbtn {
+  padding: 5px 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg);
+  color: var(--text2); font-size: 11px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; transition: all 0.18s ease;
+}
+.mbtn:hover { background: var(--alt); border-color: var(--border2); color: var(--text); }
+
+.btn-row { display: flex; gap: 8px; }
+.btn {
+  flex: 1; border: none; border-radius: 11px; padding: 12px 14px; font-size: 13px; font-weight: 700;
+  font-family: var(--font); cursor: pointer; transition: all 0.18s ease;
+  display: flex; align-items: center; justify-content: center; gap: 6px; letter-spacing: -0.1px;
+}
+.btn svg { width: 16px; height: 16px; fill: currentColor; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
+.btn-primary:hover { background: var(--accent-d); box-shadow: 0 6px 16px rgba(37,99,235,0.32); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0) scale(0.98); }
+.btn-green { background: var(--green); color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,0.22); }
+.btn-green:hover { background: #15803d; transform: translateY(-1px); }
+.btn-green:active { transform: translateY(0) scale(0.98); }
+.btn-ghost { background: var(--bg); border: 1px solid var(--border); color: var(--text2); flex: none; padding: 12px 14px; }
+.btn-ghost:hover { background: var(--alt); border-color: var(--border2); color: var(--text); }
+
+.scan-card { background: var(--alt); border: 1px solid var(--border); border-radius: 14px; padding: 20px 16px; text-align: center; }
+.scan-icon { width: 46px; height: 46px; margin: 0 auto 11px; border-radius: 13px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); }
+.scan-icon svg { width: 24px; height: 24px; fill: var(--accent); }
+.scan-title { font-size: 14.5px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.2px; }
+.scan-sub { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 14px; font-weight: 500; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 14px; }
+.chip {
+  padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg);
+  color: var(--text2); font-size: 11.5px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; transition: all 0.18s ease;
+}
+.chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-l); }
+.chip:hover:not(.active) { border-color: var(--border2); color: var(--text); }
+
+.scan-msg { font-size: 11.5px; color: var(--text2); text-align: center; padding: 6px; display: none; font-weight: 500; }
+
+.hist-empty { text-align: center; padding: 34px 20px; color: var(--text3); font-size: 12.5px; line-height: 1.8; font-weight: 500; }
+.hist-empty .he-icon { font-size: 26px; display: block; margin-bottom: 8px; }
+.hist-item { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; margin-bottom: 8px; cursor: pointer; transition: all 0.18s ease; }
+.hist-item:last-child { margin-bottom: 0; }
+.hist-item:hover { border-color: var(--accent); box-shadow: var(--shadow); transform: translateY(-1px); }
+.hist-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.hist-count { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-l); padding: 2px 9px; border-radius: 20px; }
+.hist-time { font-size: 10.5px; color: var(--text3); font-weight: 500; }
+.hist-preview { font-size: 11.5px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+
+.stats-row { display: flex; gap: 8px; }
+.stat { flex: 1; background: var(--alt); border: 1px solid var(--border); border-radius: 12px; padding: 10px 8px; text-align: center; transition: all 0.2s ease; }
+.stat:hover { background: var(--bg); box-shadow: var(--shadow-sm); }
+.stat-num { font-size: 19px; font-weight: 800; color: var(--accent); line-height: 1; letter-spacing: -0.5px; }
+.stat-lbl { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; margin-top: 4px; }
+
+.filter-row { display: flex; gap: 8px; align-items: center; }
+.search-wrap { flex: 1; position: relative; }
+.search-wrap input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); padding: 9px 11px 9px 32px; font-size: 12.5px; font-family: var(--font);
+  outline: none; transition: all 0.18s ease;
+}
+.search-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-l); }
+.search-wrap input::placeholder { color: var(--text3); }
+.search-ico { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; fill: var(--text3); pointer-events: none; }
+
+.progress-bar { height: 3px; background: var(--alt2); border-radius: 3px; overflow: hidden; display: none; }
+.progress-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 3px; transition: width 0.3s ease; }
+
+.results-area { background: var(--bg); border: 1px solid var(--border); border-radius: 13px; overflow: hidden; max-height: 248px; overflow-y: auto; }
+.results-area::-webkit-scrollbar { width: 6px; }
+.results-area::-webkit-scrollbar-track { background: transparent; }
+.results-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+.results-area::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+.results-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 13px; border-bottom: 1px solid var(--border); background: var(--alt); position: sticky; top: 0; z-index: 2; }
+.results-head-lbl { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 230px; }
+.sel-all-wrap { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); cursor: pointer; font-weight: 600; flex-shrink: 0; }
+.sel-all-wrap input { cursor: pointer; accent-color: var(--accent); width: 14px; height: 14px; }
+
+.link-item { display: flex; align-items: center; gap: 9px; padding: 9px 13px; border-bottom: 1px solid var(--border); transition: background 0.15s ease; }
+.link-item:last-child { border-bottom: none; }
+.link-item:hover { background: var(--alt); }
+.link-item.selected { background: var(--accent-l); }
+.link-chk { cursor: pointer; accent-color: var(--accent); flex-shrink: 0; width: 15px; height: 15px; }
+.link-fav { width: 19px; height: 19px; border-radius: 5px; flex-shrink: 0; object-fit: contain; background: var(--alt2); }
+.link-info { flex: 1; min-width: 0; }
+.link-domain { font-size: 11.5px; font-weight: 700; color: var(--text); margin-bottom: 1px; letter-spacing: -0.1px; }
+.link-url { font-size: 10.5px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; font-weight: 500; }
+
+.badge { padding: 3px 7px; border-radius: 6px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0; }
+.b-twitter { background: #e8f5fe; color: var(--twitter); }
+.b-social  { background: #f3effe; color: var(--purple); }
+.b-video   { background: #fdecec; color: var(--red); }
+.b-dev     { background: var(--green-l); color: var(--green); }
+.b-news    { background: #fdf0e3; color: var(--orange); }
+.b-other   { background: var(--alt2); color: var(--text3); }
+
+.link-btns { display: flex; gap: 3px; flex-shrink: 0; }
+.labtn { width: 26px; height: 26px; border: none; border-radius: 7px; background: transparent; color: var(--text3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; }
+.labtn svg { width: 14px; height: 14px; fill: currentColor; }
+.labtn:hover { background: var(--alt2); }
+.labtn.la-copy:hover { color: var(--green); }
+.labtn.la-open:hover { color: var(--accent); }
+
+.bottom-row { display: flex; gap: 8px; }
+
+.empty-state { text-align: center; padding: 22px; color: var(--text3); font-size: 12px; line-height: 1.7; font-weight: 500; }
+.empty-state .e-icon { font-size: 24px; display: block; margin-bottom: 6px; }
+
+.toast { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%) translateY(16px); opacity: 0; background: var(--text); color: #fff; border-radius: 10px; padding: 9px 16px; font-size: 12.5px; font-weight: 600; z-index: 999; white-space: nowrap; pointer-events: none; transition: all 0.26s cubic-bezier(0.4,0,0.2,1); box-shadow: var(--shadow-lg); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.dots { display: inline-flex; gap: 3px; align-items: center; }
+.dots span { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: db 1s infinite; }
+.dots span:nth-child(2) { animation-delay: 0.15s; }
+.dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes db { 0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)} }
+
+.footer { padding: 10px 16px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--alt); }
+.footer-copy { font-size: 10.5px; color: var(--text3); font-weight: 500; }
+.footer-tg { font-size: 10.5px; color: var(--accent); cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 4px; transition: color 0.18s ease; }
+.footer-tg svg { width: 13px; height: 13px; fill: currentColor; }
+.footer-tg:hover { color: var(--accent-d); }
+
+#resultsSection { display: none; flex-direction: column; gap: 10px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></div>
+    <div class="title-block">
+      <div class="app-title">Link Parser Ultra</div>
+      <div class="app-sub">Extract &amp; open links instantly</div>
+    </div>
+    <div class="header-btns">
+      <button class="hbtn" id="settingsBtn" title="Settings"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
+      <button class="hbtn" id="clearHistBtn" title="Clear history"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="text"><svg viewBox="0 0 24 24"><path d="M14 17H4v2h10v-2zm6-8H4v2h16V9zM4 15h16v-2H4v2zM4 5v2h16V5H4z"/></svg>Text</div>
+    <div class="tab" data-tab="page"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>From Page</div>
+    <div class="tab" data-tab="history"><svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>History</div>
+    <div class="tab-indicator" id="tabIndicator"></div>
+  </div>
+</div>
+
+<div class="body">
+
+  <div class="settings" id="settingsPanel">
+    <div class="settings-inner">
+      <div class="settings-title">Preferences</div>
+      <div class="setting-row"><span class="setting-label">Remove duplicate links</span><label class="toggle"><input type="checkbox" id="dedupToggle" checked><span class="tslider"></span></label></div>
+      <div class="setting-row"><span class="setting-label">Open tabs in background</span><label class="toggle"><input type="checkbox" id="bgTabToggle"><span class="tslider"></span></label></div>
+      <div class="setting-row"><span class="setting-label">Twitter / X links only</span><label class="toggle"><input type="checkbox" id="twitterOnlyToggle"><span class="tslider"></span></label></div>
+    </div>
+  </div>
+
+  <div class="panel active" id="panel-text">
+    <div class="ta-wrap">
+      <textarea id="inputBox" placeholder="Paste any messy text — URLs, tweets, markdown, HTML…
+
+e.g.  Visit https://github.com/user and www.youtube.com/watch?v=abc
+      twitter.com/elonmusk  or  t.me/channel"></textarea>
+    </div>
+    <div class="ta-toolbar">
+      <span class="ta-count" id="charCount">0 chars</span>
+      <div class="ta-btns">
+        <button class="mbtn" id="pasteBtn">Paste</button>
+        <button class="mbtn" id="clearTxtBtn">Clear</button>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="parseBtn"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>Parse Links</button>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-page">
+    <div class="scan-card">
+      <div class="scan-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div>
+      <div class="scan-title">Extract From Active Tab</div>
+      <div class="scan-sub">Scan every link on the current page.<br>Filter by category before scanning.</div>
+      <div class="chips" id="pageChips">
+        <div class="chip active" data-filter="all">All</div>
+        <div class="chip" data-filter="twitter">Twitter / X</div>
+        <div class="chip" data-filter="social">Social</div>
+        <div class="chip" data-filter="video">Video</div>
+        <div class="chip" data-filter="dev">Dev</div>
+        <div class="chip" data-filter="news">News</div>
+      </div>
+      <button class="btn btn-primary" id="scanBtn" style="width:100%"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>Scan Page Now</button>
+    </div>
+    <div class="scan-msg" id="scanMsg"></div>
+  </div>
+
+  <div class="panel" id="panel-history">
+    <div id="histContent"><div class="hist-empty"><span class="he-icon">📭</span>No history yet.<br>Parse some links to see sessions here.</div></div>
+  </div>
+
+  <div id="resultsSection">
+    <div class="stats-row">
+      <div class="stat"><div class="stat-num" id="stTotal">0</div><div class="stat-lbl">Total</div></div>
+      <div class="stat"><div class="stat-num" id="stUnique">0</div><div class="stat-lbl">Unique</div></div>
+      <div class="stat"><div class="stat-num" id="stDomains">0</div><div class="stat-lbl">Domains</div></div>
+      <div class="stat"><div class="stat-num" id="stSocial">0</div><div class="stat-lbl">Social</div></div>
+    </div>
+
+    <div class="filter-row">
+      <div class="search-wrap">
+        <svg class="search-ico" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" id="searchInput" placeholder="Filter links…">
+      </div>
+      <button class="btn btn-ghost" id="exportBtn" title="Export as .txt"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button>
+    </div>
+
+    <div class="progress-bar" id="progBar"><div class="progress-fill" id="progFill"></div></div>
+
+    <div class="results-area">
+      <div class="results-head">
+        <span class="results-head-lbl" id="resultsLbl">Parsed Links</span>
+        <label class="sel-all-wrap"><input type="checkbox" id="selAll"> Select all</label>
+      </div>
+      <div id="linksList"></div>
+    </div>
+
+    <div class="bottom-row">
+      <button class="btn btn-ghost" id="copyAllBtn"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
+      <button class="btn btn-primary" id="openSelBtn">Open Selected</button>
+      <button class="btn btn-green" id="openAllBtn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Open All</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <span class="footer-copy">© Shahriar Ahmed</span>
+  <span class="footer-tg" id="tgLink"><svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>t.me/igfrostt</span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="popup.js"></script>
+</body>
+</html>
